@@ -1,120 +1,43 @@
-#define C4  262
-#define D4  294
-#define E4  330
-
-#include <MozziGuts.h>
-#include <Oscil.h> // oscillator template
-#include <tables/sin2048_int8.h> // sine table for oscillator
-
-Oscil <SIN2048_NUM_CELLS, AUDIO_RATE> cSin(SIN2048_DATA);
-Oscil <SIN2048_NUM_CELLS, AUDIO_RATE> dSin(SIN2048_DATA);
-Oscil <SIN2048_NUM_CELLS, AUDIO_RATE> eSin(SIN2048_DATA);
-
-// use #define for CONTROL_RATE, not a constant
-#define CONTROL_RATE 64 // powers of 2 please
-
-const int C_Btn = 0;
-int C_Btn_State = 0;
-const int D_Btn = 2;
-int D_Btn_State = 2;
-const int E_Btn = 4;
-int E_Btn_State = 4;
-
-int gain_cSin;
-int gain_dSin;
-int gain_eSin;
-
-int pitch_cSin;
-int pitch_dSin;
-int pitch_eSin;
+#include <usbh_midi.h>
+#include <usbhub.h>
+#include <SPI.h>
 
 
-void setup(){
+USB Usb;
+USBH_MIDI Midi(&Usb);
 
-  Serial.begin(9600);          // 9600 bpsで接続 
-  startMozzi(CONTROL_RATE); // set a control rate of 64 (powers of 2 please)
+int pin = 8;
+int melo = 200;
+double tones[128] = {8.2, 8.7, 9.2, 9.7, 10.3, 10.9, 11.6, 12.2, 13, 13.8, 14.6, 15.4, 16.4, 17.3, 18.4, 19.4, 20.6, 21.8, 23.1, 24.5, 26, 27.5, 29.1, 30.9, 32.7, 34.6, 36.7, 38.9, 41.2, 43.7, 46.2, 49, 51.9, 55, 58.3, 61.7, 65.4, 69.3, 73.4, 77.8, 82.4, 87.3, 92.5, 98, 103.8, 110, 116.5, 123.5, 130.8, 138.6, 146.8, 155.6, 164.8, 174.6, 185, 196, 207.7, 220, 233.1, 246.9, 261.6, 277.2, 293.7, 311.1, 329.6, 349.2, 370, 392, 415.3, 440, 466.2, 493.9, 523.3, 554.4, 587.3, 622.3, 659.3, 698.5, 740, 784, 830.6, 880, 932.3, 987.8, 1046.5, 1108.7, 1174.7, 1244.5, 1318.5, 1396.9, 1480, 1568, 1661.2, 1760, 1864.7, 1975.5, 2093, 2217.5, 2349.3, 2489, 2637, 2793.8, 2960, 3136, 3322.4, 3520, 3729.3, 3951.1, 4186, 4434.9, 4698.6, 4978, 5274, 5587.7, 5919.9, 6271.9, 6644.9, 7040, 7458.6, 7902.1, 8372, 8869.8, 9397.3, 9956.1, 10548.1, 11175.3, 11839.8, 12543.9};
 
-  //Inputモードでプルアップ抵抗を有効に
-  pinMode(C_Btn, INPUT_PULLUP); 
-  pinMode(D_Btn, INPUT_PULLUP); 
-  pinMode(E_Btn, INPUT_PULLUP); 
 
-  //pinMode(Speaker,OUTPUT);
-  //aSin.setFreq(440); // set the frequency
+void setup() {
+  Serial.begin(9600);
+  pinMode(pin, OUTPUT);
+
+  if (Usb.Init() == -1) {
+    while(1);
+  }
+  delay(200);
 }
-void updateControl(){
-  // put changing controls in here
-  int X,Y,Z;
 
-  X = C4;
-  Y = D4;
-  Z = E4;
-  
-    cSin.setFreq(X); 
-    dSin.setFreq(Y); 
-    eSin.setFreq(Z); 
-    gain_cSin = 255;
-    gain_dSin = 255;
-    gain_eSin = 255;
-    gain_cSin*=0.9;
-    gain_dSin*=0.9;
-    gain_eSin*=0.9; 
+void loop() {
+  Usb.Task();
+
+  if (Usb.getUsbTaskState() == USB_STATE_RUNNING) {
+    getTone();
+  }
 }
-int updateAudio(){
 
-  if (C_Btn_State == LOW && D_Btn_State == LOW && E_Btn_State == LOW) {
-    return (((cSin.next()*gain_cSin)>>8) + ((dSin.next()*gain_dSin)>>8) + ((eSin.next()*gain_eSin)>>8))/3;
-  } 
-  else if (C_Btn_State == LOW && D_Btn_State == LOW) {
-    return (((cSin.next()*gain_cSin)>>8) + ((dSin.next()*gain_dSin)>>8))/2;
-  }  
-  else if (C_Btn_State == LOW && E_Btn_State == LOW) {
-    return (((cSin.next()*gain_cSin)>>8) + ((eSin.next()*gain_eSin)>>8))/2;
-  }  
-  else if (D_Btn_State == LOW && E_Btn_State == LOW) {
-    return (((dSin.next()*gain_dSin)>>8) + ((eSin.next()*gain_eSin)>>8))/2;
-  }
-  else if (C_Btn_State == LOW) {
-    return ((cSin.next()*gain_cSin)>>8); 
-  } 
-  else if (D_Btn_State == LOW) {
-    return ((dSin.next()*gain_dSin)>>8); 
-  }  
-  else if (E_Btn_State == LOW) {
-    return ((eSin.next()*gain_eSin)>>8); 
-  }
-
-  return 0;
-  //return (((cSin.next()*gain_cSin)>>8) + ((dSin.next()*gain_dSin)>>8) + ((eSin.next()*gain_eSin)>>8))/3;  
-}
-void loop(){
-  audioHook(); // required here
-
-  C_Btn_State = digitalRead(C_Btn);
-  D_Btn_State = digitalRead(D_Btn);
-  E_Btn_State = digitalRead(E_Btn);
-
-  //C
-  if (C_Btn_State == LOW) {
-    //Serial.println("C_ON"); 
-  } 
-  else {
-    //Serial.println("C_OFF"); 
-  }
-  
-  //D
-  if (D_Btn_State == LOW) {
-    //Serial.println("D_ON"); 
-  } 
-  else {
-    //Serial.println("D_OFF"); 
-  }
-
-  //E
-  if (E_Btn_State == LOW) {
-    //Serial.println("E_ON"); 
-  } 
-  else {
-    //Serial.println("E_OFF"); 
+void getTone() {
+  char buf[20];
+  uint8_t bufMidi[64];
+  uint16_t rcvd;
+  if (Midi.RecvData(&rcvd, bufMidi) == 0 ) {
+    if (bufMidi[0] == 9) {
+      int note = bufMidi[2];
+      tone(pin, tones[note], 200);
+      Serial.print(tones[note]);
+    }
   }
 }
