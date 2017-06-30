@@ -34,10 +34,14 @@ void getTone() {
   uint8_t bufMidi[64];
   uint16_t rcvd;
   if (Midi.RecvData(&rcvd, bufMidi) == 0 ) {
-    if (bufMidi[0] == 9) {
+    
+    if (bufMidi[0] == 8) {
+            
+      //noTone(pin);
+    }else if (bufMidi[0] == 9) {
       int note = bufMidi[2];
-      tone(pin, tones[note], 200);
-      Serial.print(tones[note]);
+      tone(pin, tones[note]);
+      Serial.println(tones[note]);
     }
   }
 }
