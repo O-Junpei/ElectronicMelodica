@@ -54,13 +54,29 @@ void getTone() {
 
 
 void set_ss_pin(int val) {
-    if(val ==HIGH) PORTB |= (4);
-    else PORTB &= ~(4);
+ //ポートB (デジタルピン8から13) 
+  //ポートBの３番目は10
+  //B00000100 は　論理積で4
+  //なのでPORTB |= (4);
+  
+  //PORTDはデジタルピンの０〜７
+  //Pin2はPORTDの３つ目
+  // PORTD | (4);
+  if(val ==HIGH){
+    //PORTB |= (4);
+    PORTD = PORTD | (4);
+  }else{
+    PORTD &= ~(4);
+  } 
 }
 
 void set_rst_pin(int val) {
-    if(val ==HIGH) PORTB |= (2);
-    else PORTB &= ~(2);
+    //PORTDはデジタルピンの０〜７
+    //Pin2はPORTDの4つ目
+    //B00001000 は　論理積で8
+    // PORTD | (8);
+    if(val ==HIGH) PORTD |= (8);
+    else PORTD &= ~(8);
 }
 
 void if_write(char addr,unsigned char* data,char num){
@@ -106,7 +122,7 @@ void init_825(void) {
    delay(1);
    if_s_write( 0x02, 0x00 );
    //add
-   if_s_write( 0x19, 0x20 );//MASTER VOL
+   if_s_write( 0x19, 0xF0 );//MASTER VOL
    if_s_write( 0x1B, 0x3F );//interpolation
    if_s_write( 0x14, 0x00 );//interpolation
    if_s_write( 0x03, 0x01 );//Analog Gain
