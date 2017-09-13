@@ -111,9 +111,14 @@ void set_ch(void){
    if_s_write( 0x13, 0x00 );// FRAC  
 }
 
-void keyon(unsigned char fnumh, unsigned char fnuml){
-   if_s_write( 0x0B, 0x00 );//voice num
-   if_s_write( 0x0C, 0x54 );//vovol
+unsigned char vovol = (0x18 << 2);
+
+void keyon(unsigned char fnumh, unsigned char fnuml, unsigned char vn){
+   //if_s_write( 0x0B, 0x00 );//voice num
+   if_s_write( 0x0B, vn );//voice num
+   if_s_write( 0x0C, 0x20 );//vovol
+   //if_s_write( 0x0C, vovol );//vovol
+
    if_s_write( 0x0D, fnumh );//fnum
    if_s_write( 0x0E, fnuml );//fnum
    if_s_write( 0x0F, 0x40 );//keyon = 1  
@@ -121,4 +126,7 @@ void keyon(unsigned char fnumh, unsigned char fnuml){
 
 void keyoff(void){
    if_s_write( 0x0F, 0x00 );//keyon = 0
+   //if_s_write( 0x0F, 0x01 );//keyon = 1
+   //if_s_write( 0x0F, 0x02 );//keyon = 2
+
 }
